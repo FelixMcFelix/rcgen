@@ -634,6 +634,8 @@ pub struct CertificateParams {
 	///
 	/// Defaults to SHA-256.
 	pub key_identifier_method :KeyIdMethod,
+
+	pub aux_enc_data :Option<Vec<u8>>,
 }
 
 impl Default for CertificateParams {
@@ -658,6 +660,7 @@ impl Default for CertificateParams {
 			key_pair : None,
 			use_authority_key_identifier_extension : false,
 			key_identifier_method : KeyIdMethod::Sha256,
+			aux_enc_data : None,
 		}
 	}
 }
@@ -1004,7 +1007,7 @@ impl CertificateParams {
 		yasna::try_construct_der(|writer| {
 			writer.write_sequence(|writer| {
 
-				let tbs_cert_list_serialized = yasna::try_construct_der(|writer| {
+				let mut tbs_cert_list_serialized = yasna::try_construct_der(|writer| {
 					self.write_cert(writer, pub_key, ca)?;
 					Ok::<(), RcgenError>(())
 				})?;
@@ -1013,6 +1016,10 @@ impl CertificateParams {
 
 				// Write signatureAlgorithm
 				ca.params.alg.write_alg_ident(writer.next());
+
+				if let Some(ext_data) = &self.aux_enc_data {
+					tbs_cert_list_serialized.extend_from_slice(&ext_data[..])
+				}
 
 				// Write signature
 				ca.key_pair.sign(&tbs_cert_list_serialized, writer.next())?;
