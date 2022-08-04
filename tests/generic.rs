@@ -1,8 +1,9 @@
 mod util;
 
-use rcgen::{RcgenError, KeyPair, Certificate};
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
+use rcgen::{Certificate, KeyPair, RcgenError};
 
 fn generate_hash<T: Hash>(subject: &T) -> u64 {
 	let mut hasher = DefaultHasher::new();
@@ -41,7 +42,10 @@ fn test_key_params_mismatch() {
 			assert_eq!(
 				Certificate::from_params(wrong_params).err(),
 				Some(RcgenError::CertificateKeyPairMismatch),
-				"i: {} j: {}", i, j);
+				"i: {} j: {}",
+				i,
+				j
+			);
 		}
 	}
 }
